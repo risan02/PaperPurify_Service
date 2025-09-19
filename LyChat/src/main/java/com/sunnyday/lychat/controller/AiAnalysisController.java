@@ -5,6 +5,7 @@ import com.ruoyi.common.core.domain.AjaxResult;
 import com.sunnyday.lychat.entity.AiAnalysisResultVo;
 import com.sunnyday.lychat.entity.AiDimensionVo;
 import com.sunnyday.lychat.entity.QualityDimensionVo;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -13,6 +14,7 @@ import java.util.Arrays;
 /**
  * AI内容分析控制器
  */
+@Slf4j
 @RestController
 @RequestMapping("/ai")
 public class AiAnalysisController {
@@ -42,7 +44,7 @@ public class AiAnalysisController {
 
             // 4. 调用AI分析服务 (这里先返回模拟数据)
             AiAnalysisResultVo result = analyzeContent(file);
-
+            log.info("AI分析結果: " + result);
             return AjaxResult.success(result);
         } catch (Exception e) {
             return AjaxResult.error("分析中にエラーが発生しました: " + e.getMessage());
@@ -57,7 +59,7 @@ public class AiAnalysisController {
         // 暂时返回模拟数据
 
         AiAnalysisResultVo result = new AiAnalysisResultVo();
-        result.setAiScore(75);
+        result.setAiScore(79);
         result.setAiProbability("high");
 
         // AI分析维度
@@ -81,32 +83,32 @@ public class AiAnalysisController {
         // 质量维度
         QualityDimensionVo quality1 = new QualityDimensionVo();
         quality1.setName("志望動機の明確性と具体性");
-        quality1.setScore(88);
+        quality1.setScore(89);
         quality1.setEvaluation("志望動機は明確で具体的ですが、より個人的な経験や具体例を追加すると説得力が増します。");
 
         QualityDimensionVo quality2 = new QualityDimensionVo();
         quality2.setName("学部専門との適合度");
-        quality2.setScore(75);
+        quality2.setScore(79);
         quality2.setEvaluation("選択した専門分野との関連性はありますが、より深い関連性を示す具体例が必要です。");
 
         QualityDimensionVo quality3 = new QualityDimensionVo();
         quality3.setName("学習計画の合理性");
-        quality3.setScore(68);
+        quality3.setScore(69);
         quality3.setEvaluation("学習計画は基本的に合理的ですが、時間配分と具体的な実施方法についてより詳細な記述が必要です。");
 
         QualityDimensionVo quality4 = new QualityDimensionVo();
         quality4.setName("文章構造と論理展開");
-        quality4.setScore(80);
+        quality4.setScore(81);
         quality4.setEvaluation("文章構造は整っていますが、段落間のつながりや論理の流れに改善の余地があります。");
 
         QualityDimensionVo quality5 = new QualityDimensionVo();
         quality5.setName("表現力と説得力");
-        quality5.setScore(92);
+        quality5.setScore(91);
         quality5.setEvaluation("言語表現が流暢で、学術用語が正確で、文体が美しく、かなりの可読性があります。");
 
         QualityDimensionVo quality6 = new QualityDimensionVo();
         quality6.setName("文法と日本語の正確性");
-        quality6.setScore(95);
+        quality6.setScore(99);
         quality6.setEvaluation("文法は正確で、日本語表現も自然です。ただし、一部の表現がやや硬い印象です。");
 
         result.setQualityDimensions(Arrays.asList(quality1, quality2, quality3, quality4, quality5, quality6));
@@ -119,7 +121,6 @@ public class AiAnalysisController {
                 "第2-4段落の表現方法を見直し、より自然な流れになるように調整してください。",
                 "結論部分の論理的一貫性を強化し、論文全体の主張を明確にまとめてください。"
         ));
-
         return result;
     }
 }
