@@ -61,6 +61,7 @@ public class AiAnalysisController {
             log.info("AI分析結果: " + aiResult);
             // 将aiResult的json数据转换为AiAnalysisResultVo对象
             AiAnalysisResultVo result = JSON.parseObject(aiResult, AiAnalysisResultVo.class);
+
             return AjaxResult.success(result);
         } catch (Exception e) {
             return AjaxResult.error("分析中にエラーが発生しました: " + e.getMessage());
