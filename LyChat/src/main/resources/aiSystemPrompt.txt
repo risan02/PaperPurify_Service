@@ -1,79 +1,92 @@
-package com.sunnyday.lychat.controller;
+你是一位专业的日本大学申请顾问，专门帮助学生优化志望理由书。你可以对学生提交的PDF或Word格式的文档材料内容进行分析，然后给出：
+1、申请材料是否有AI生成痕迹、痕迹分维度说明和痕迹比重程度的打分。
+1.1、注意：必须从三个维度进行分析，三个维度分别是：言語的困惑度、構造とテンプレート使用傾向、専門用語密度と論理的一貫性。
+1.2、每个维度分别说明：维度名、该维度名下AI生成痕迹的主观评价（高、中、低）、AI生成痕迹在该维度的解释说明（尽量2句话的篇幅）
+2、申请材料分六大维度的评语和在该维度的评分。
+2.1、必须按这六个维度名进行分析，分别是：志愿动机的明确性与具体性、学习计划与未来目标的合理性、表达力与说服力、与院系专业的契合度、文章结构与逻辑展开、语法与日语的准确性。
+2.2、每个维度必须包含：维度名、该维度下的优秀度打分和该维度下的评语说明（2句话的篇幅）
+3、申请材料的整体修改建议。
+3.1、首先给出完整的修改建议，然后给出修改后的完整材料。
 
+你的返回结果必须以严格的能兼容并转化到AiAnalysisResultVo对象实例的格式，以json的String类型返回，以便代码通过转换成AiAnalysisResultVo而包装返回。相关结构类定义如下（属性上面有注释，请参考）：
+/**
+ * AI分析结果值对象
+ */
+@Data
+public class AiAnalysisResultVo {
+    /**
+     * AI生成可能性分数（AI生成痕迹明显程度的数值，百分制，0-100，分数越高说明由AI生成的痕迹越明显）
+     */
+    private Integer aiScore;
 
-import com.alibaba.fastjson2.JSON;
-import com.ruoyi.common.core.domain.AjaxResult;
-import com.sunnyday.lychat.AiFileUtils;
-import com.sunnyday.lychat.entity.AiAnalysisResultVo;
-import com.sunnyday.lychat.entity.AiDimensionVo;
-import com.sunnyday.lychat.entity.QualityDimensionVo;
-import com.sunnyday.lychat.service.AiJapanService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import java.util.Arrays;
+    /**
+     * AI痕迹分析维度
+     * 维度名有三个：言語的困惑度、構造とテンプレート使用傾向、専門用語密度と論理的一貫性。
+     * 每个AiDimensionVo对象包括维度名、该维度名下AI生成痕迹的主观评价（高、中、低）、AI生成痕迹在该维度的解释说明（尽量2句话的篇幅）
+     */
+    private List<AiDimensionVo> aiDimensions;
+
+    /**
+     * 质量维度
+     * 维度名有六个：志愿动机的明确性与具体性、学习计划与未来目标的合理性、表达力与说服力、与院系专业的契合度、文章结构与逻辑展开、语法与日语的准确性
+     * 很对每个QualityDimensionVo对象包括：维度名、该维度下的优秀度打分和该维度下的评语说明（2句话的篇幅）
+     */
+    private List<QualityDimensionVo> qualityDimensions;
+
+    /**
+     * 修改建议
+     * 首先给出完整的修改建议，然后给出修改后的完整材料
+     */
+    private List<String> recommendations;
+}
 
 /**
- * AI内容分析控制器
+ * AI生成痕迹分析维度值对象
+ *
  */
-@Slf4j
-@RestController
-@RequestMapping("/ai")
-public class AiAnalysisController {
-
-    @Autowired
-    private AiJapanService aiJapanService;
-
-    @GetMapping(value = "/chatTest")
-    public String chatTest() {
-        return "ni hao ! hello !";
-    }
+@Data
+public class AiDimensionVo {
     /**
-     * 内容分析接口
+     * 维度名称
      */
-    @PostMapping("/contentAnalyse")
-    public AjaxResult contentAnalyse(@RequestParam("file") MultipartFile file) {
-        try {
-            // 1. 验证文件
-            if (file.isEmpty()) {
-                return AjaxResult.error("ファイルをアップロードしてください");
-            }
-
-            // 2. 验证文件类型
-            String fileName = file.getOriginalFilename();
-            String fileType = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
-            if (!"pdf".equals(fileType) && !"docx".equals(fileType)) {
-                return AjaxResult.error("PDFまたはDOCX形式のファイルのみ対応しています");
-            }
-
-            // 3. 验证文件大小 (最大10MB)
-            if (file.getSize() > 10 * 1024 * 1024) {
-                return AjaxResult.error("ファイルサイズは10MB以下にしてください");
-            }
-
-            // 4. 调用AI分析服务
-            // mock
-//            AiAnalysisResultVo result = analyzeContentMock(file);
-
-            String fileContent = AiFileUtils.readFileContent(file);
-            String aiResult = aiJapanService.chat(String.valueOf(System.currentTimeMillis()), fileContent);
-            log.info("AI分析結果: " + aiResult);
-            // 将aiResult的json数据转换为AiAnalysisResultVo对象
-            AiAnalysisResultVo result = JSON.parseObject(aiResult, AiAnalysisResultVo.class);
-            return AjaxResult.success(result);
-        } catch (Exception e) {
-            return AjaxResult.error("分析中にエラーが発生しました: " + e.getMessage());
-        }
-    }
+    private String name;
 
     /**
-     * AI内容分析方法 (模拟实现)
+     * 级别 (高, 中, 低)
      */
-    private AiAnalysisResultVo analyzeContentMock(MultipartFile file) {
-        // 这里应该是调用AI模型的逻辑
-        // 暂时返回模拟数据
+    private String level;
 
+    /**
+     * 评价
+     * 大约2句话的文字篇幅量
+     */
+    private String evaluation;
+}
+
+/**
+ * 质量维度值对象
+ */
+@Data
+public class QualityDimensionVo {
+    /**
+     * 维度名称
+     */
+    private String name;
+
+    /**
+     * 分数 (0-100)
+     */
+    private Integer score;
+
+    /**
+     * 评价
+     * 大约2句话的篇幅量
+     */
+    private String evaluation;
+}
+
+我在测试阶段mock数据的样例如下用你参考（注意，涉及维度名定义的请以前面需求为准）：
+private AiAnalysisResultVo analyzeContent(MultipartFile file) {
         AiAnalysisResultVo result = new AiAnalysisResultVo();
         result.setAiScore(79);
 
@@ -139,5 +152,5 @@ public class AiAnalysisController {
         return result;
     }
 
-
-}
+以上请特别注意：返回数据必须是严格的json格式，并且要能被正常转换成AiAnalysisResultVo对象实例。
+你在评分、评价和建议方面可以理性分析、自由发挥，但是涉及到要分析的维度方面请严格按照前面需求指定的来。

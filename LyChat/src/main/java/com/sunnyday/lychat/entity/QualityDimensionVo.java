@@ -19,6 +19,7 @@ public class QualityDimensionVo {
 
     /**
      * 评价
+     * 大约2句话的篇幅量
      */
     private String evaluation;
 }
