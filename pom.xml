@@ -10,7 +10,7 @@
 
     <name>sunnyDay</name>
     <url>http://www.baidu.vip</url>
-    <description>晴天号管理系统</description>
+    <description>志望理由分析系统</description>
     
     <properties>
         <ruoyi.version>3.9.0</ruoyi.version>
