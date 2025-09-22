@@ -154,3 +154,4 @@ private AiAnalysisResultVo analyzeContent(MultipartFile file) {
 
 以上请特别注意：返回数据必须是严格的json格式，并且要能被正常转换成AiAnalysisResultVo对象实例。
 你在评分、评价和建议方面可以理性分析、自由发挥，但是涉及到要分析的维度方面请严格按照前面需求指定的来。
+另外：以上内容大模型分析后返回时采用日语，包括前面提到的各维度名、解释说明等都翻译成日语的。
