@@ -14,9 +14,9 @@ public class AiDimensionVo {
     private String name;
 
     /**
-     * 级别 (高, 中, 低)
+     * 级别 (0.0-10.0，保留1位小数，分数越高越接近人类写作)
      */
-    private String level;
+    private Double level;
 
     /**
      * 评价

@@ -8,6 +8,7 @@ import com.sunnyday.lychat.entity.AiAnalysisResultVo;
 import com.sunnyday.lychat.entity.AiDimensionVo;
 import com.sunnyday.lychat.entity.QualityDimensionVo;
 import com.sunnyday.lychat.service.AiJapanService;
+import com.sunnyday.lychat.service.AiTextAnalysisService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,9 @@ public class AiAnalysisController {
 
     @Autowired
     private AiJapanService aiJapanService;
+
+    @Autowired
+    private AiTextAnalysisService aiTextAnalysisService;
 
     @GetMapping(value = "/chatTest")
     public String chatTest() {
@@ -57,10 +61,19 @@ public class AiAnalysisController {
 //            AiAnalysisResultVo result = analyzeContentMock(file);
 
             String fileContent = AiFileUtils.readFileContent(file);
+            
+            // 调用AI大模型分析（质量维度和修改建议）
             String aiResult = aiJapanService.chat(String.valueOf(System.currentTimeMillis()), fileContent);
             log.info("AI分析結果: " + aiResult);
             // 将aiResult的json数据转换为AiAnalysisResultVo对象
             AiAnalysisResultVo result = JSON.parseObject(aiResult, AiAnalysisResultVo.class);
+            
+            // 通过数学公式计算AI痕迹分析维度（6个维度）和AI率（一次性计算，避免重复）
+            AiTextAnalysisService.AnalysisResult analysisResult = aiTextAnalysisService.analyzeWithScore(fileContent);
+            
+            // 填充AI痕迹分析结果
+            result.setAiDimensions(analysisResult.getDimensions());
+            result.setAiScore(analysisResult.getAiScore());
 
             return AjaxResult.success(result);
         } catch (Exception e) {
@@ -78,20 +91,20 @@ public class AiAnalysisController {
         AiAnalysisResultVo result = new AiAnalysisResultVo();
         result.setAiScore(79);
 
-        // AI分析维度
+        // AI分析维度（Mock数据，实际使用时会通过算法计算）
         AiDimensionVo dimension1 = new AiDimensionVo();
         dimension1.setName("言語的困惑度");
-        dimension1.setLevel("高");
+        dimension1.setLevel(3.5); // 0.0-10.0，保留1位小数
         dimension1.setEvaluation("専門用語が使われているにもかかわらず、文章の構造があまりにも整然としていて、自然な流暢さに欠けている。");
 
         AiDimensionVo dimension2 = new AiDimensionVo();
         dimension2.setName("構造とテンプレート使用傾向");
-        dimension2.setLevel("中");
+        dimension2.setLevel(5.0);
         dimension2.setEvaluation("抽象的な定義から入り、論理展開が非常に典型的で、独自性に欠ける。");
 
         AiDimensionVo dimension3 = new AiDimensionVo();
         dimension3.setName("専門用語密度と論理的一貫性");
-        dimension3.setLevel("高");
+        dimension3.setLevel(3.2);
         dimension3.setEvaluation("「第一性原理的思考」「制度設計」「政策立案型エコノミスト」など高度な専門用語が一貫して使用されているが、論理展開にやや無理がある。");
 
         result.setAiDimensions(Arrays.asList(dimension1, dimension2, dimension3));
