@@ -27,7 +27,7 @@
         <fastjson.version>2.0.58</fastjson.version>
         <oshi.version>6.8.3</oshi.version>
         <commons.io.version>2.19.0</commons.io.version>
-        <poi.version>4.1.2</poi.version>
+        <poi.version>5.2.3</poi.version>
         <velocity.version>2.3</velocity.version>
         <jwt.version>0.9.1</jwt.version>
         <mysql.version>8.2.0</mysql.version>
@@ -116,9 +116,20 @@
             </dependency>
 
             <!-- excel工具 -->
+            <!-- 注意：统一使用POI 5.2.3版本，POI 5.x移除了POILogFactory，改用SLF4J -->
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.apache.poi</groupId>
                 <artifactId>poi-ooxml</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-scratchpad</artifactId>
                 <version>${poi.version}</version>
             </dependency>
 

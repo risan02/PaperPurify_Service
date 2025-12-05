@@ -99,6 +99,17 @@
         <dependency>
             <groupId>com.ruoyi</groupId>
             <artifactId>ruoyi-common</artifactId>
+            <!-- 排除旧版本的POI依赖（4.1.2），避免与LyChat的POI 5.2.3冲突 -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.poi</groupId>
+                    <artifactId>poi-ooxml</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.poi</groupId>
+                    <artifactId>poi</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 

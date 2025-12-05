@@ -40,6 +40,17 @@
         <dependency>
             <groupId>com.ruoyi</groupId>
             <artifactId>ruoyi-framework</artifactId>
+            <!-- 排除旧版本的POI依赖（通过ruoyi-system -> ruoyi-common传递），避免与LyChat的POI 5.2.3冲突 -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.poi</groupId>
+                    <artifactId>poi-ooxml</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.poi</groupId>
+                    <artifactId>poi</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- 定时任务-->
