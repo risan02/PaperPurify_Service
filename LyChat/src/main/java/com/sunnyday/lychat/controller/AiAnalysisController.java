@@ -9,11 +9,15 @@ import com.sunnyday.lychat.entity.AiDimensionVo;
 import com.sunnyday.lychat.entity.QualityDimensionVo;
 import com.sunnyday.lychat.service.AiJapanService;
 import com.sunnyday.lychat.service.AiTextAnalysisService;
+import com.sunnyday.lychat.service.AiPromptService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
+import java.util.Locale;
 
 /**
  * AI内容分析控制器
@@ -29,6 +33,12 @@ public class AiAnalysisController {
     @Autowired
     private AiTextAnalysisService aiTextAnalysisService;
 
+    @Autowired
+    private AiPromptService aiPromptService;
+
+    @Autowired
+    private MessageSource messageSource;
+
     @GetMapping(value = "/chatTest")
     public String chatTest() {
         return "ni hao ! hello !";
@@ -37,48 +47,99 @@ public class AiAnalysisController {
      * 内容分析接口
      */
     @PostMapping("/contentAnalyse")
-    public AjaxResult contentAnalyse(@RequestParam("file") MultipartFile file) {
+    public AjaxResult contentAnalyse(
+            @RequestParam("file") MultipartFile file,
+            HttpServletRequest request) {
         try {
-            // 1. 验证文件
+            // 1. 从请求头获取语言参数
+            String acceptLanguage = request.getHeader("Accept-Language");
+            Locale locale = parseLocale(acceptLanguage);
+            log.info("当前语言环境: {}", locale);
+
+            // 2. 验证文件
             if (file.isEmpty()) {
-                return AjaxResult.error("ファイルをアップロードしてください");
+                String errorMsg = messageSource.getMessage("error.file.empty", null, locale);
+                return AjaxResult.error(errorMsg);
             }
 
-            // 2. 验证文件类型
+            // 3. 验证文件类型
             String fileName = file.getOriginalFilename();
             String fileType = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
             if (!"pdf".equals(fileType) && !"docx".equals(fileType)) {
-                return AjaxResult.error("PDFまたはDOCX形式のファイルのみ対応しています");
+                String errorMsg = messageSource.getMessage("error.file.type", null, locale);
+                return AjaxResult.error(errorMsg);
             }
 
-            // 3. 验证文件大小 (最大10MB)
+            // 4. 验证文件大小 (最大10MB)
             if (file.getSize() > 10 * 1024 * 1024) {
-                return AjaxResult.error("ファイルサイズは10MB以下にしてください");
+                String errorMsg = messageSource.getMessage("error.file.size", null, locale);
+                return AjaxResult.error(errorMsg);
             }
 
-            // 4. 调用AI分析服务
-            // mock
-//            AiAnalysisResultVo result = analyzeContentMock(file);
-
+            // 5. 读取文件内容
             String fileContent = AiFileUtils.readFileContent(file);
             
-            // 调用AI大模型分析（质量维度和修改建议）
-            String aiResult = aiJapanService.chat(String.valueOf(System.currentTimeMillis()), fileContent);
+            // 6. 获取对应语言的提示词（作为系统消息）
+            String systemPrompt = aiPromptService.getSystemPrompt(locale);
+            
+            // 7. 构建完整的提示词，明确要求使用指定语言返回
+            String languageRequirement = locale.equals(Locale.SIMPLIFIED_CHINESE) 
+                    ? "\n\n【重要语言要求】你必须使用中文（简体）返回所有内容：\n" +
+                      "- qualityDimensions中每个维度的name字段必须使用中文\n" +
+                      "- qualityDimensions中每个维度的evaluation字段（评价说明）必须使用中文\n" +
+                      "- recommendations数组中的每个修改建议必须使用中文\n" +
+                      "- 所有返回的文本内容都必须使用中文，不得使用日语或其他语言\n"
+                    : "\n\n【重要言語要件】あなたは日本語ですべての内容を返す必要があります：\n" +
+                      "- qualityDimensionsの各次元のnameフィールドは日本語を使用する必要があります\n" +
+                      "- qualityDimensionsの各次元のevaluationフィールド（評価説明）は日本語を使用する必要があります\n" +
+                      "- recommendations配列の各修正提案は日本語を使用する必要があります\n" +
+                      "- 返されるすべてのテキストコンテンツは日本語を使用する必要があり、中国語やその他の言語を使用してはいけません\n";
+            
+            // 8. 构建完整的用户消息，包含系统提示词、语言要求和文档内容
+            String fullPrompt = systemPrompt + languageRequirement + "\n\n请分析以下文档内容：\n" + fileContent;
+            
+            // 9. 调用AI服务，使用不带固定系统消息的方法，完全由我们控制提示词
+            // 这样确保语言要求被正确传递，不会被固定的日语系统消息覆盖
+            String aiResult = aiJapanService.chatWithoutSystemMessage(String.valueOf(System.currentTimeMillis()), fullPrompt);
             log.info("AI分析結果: " + aiResult);
-            // 将aiResult的json数据转换为AiAnalysisResultVo对象
+            
+            // 8. 将aiResult的json数据转换为AiAnalysisResultVo对象
             AiAnalysisResultVo result = JSON.parseObject(aiResult, AiAnalysisResultVo.class);
             
-            // 通过数学公式计算AI痕迹分析维度（6个维度）和AI率（一次性计算，避免重复）
-            AiTextAnalysisService.AnalysisResult analysisResult = aiTextAnalysisService.analyzeWithScore(fileContent);
+            // 9. 通过数学公式计算AI痕迹分析维度（6个维度）和AI率（一次性计算，避免重复）
+            AiTextAnalysisService.AnalysisResult analysisResult = aiTextAnalysisService.analyzeWithScore(fileContent, locale);
             
-            // 填充AI痕迹分析结果
+            // 10. 填充AI痕迹分析结果
             result.setAiDimensions(analysisResult.getDimensions());
             result.setAiScore(analysisResult.getAiScore());
 
             return AjaxResult.success(result);
         } catch (Exception e) {
-            return AjaxResult.error("分析中にエラーが発生しました: " + e.getMessage());
+            log.error("分析过程中发生错误", e);
+            String acceptLanguage = request.getHeader("Accept-Language");
+            Locale locale = parseLocale(acceptLanguage);
+            String errorMsg = messageSource.getMessage("error.analysis.failed", new Object[]{e.getMessage()}, locale);
+            return AjaxResult.error(errorMsg);
         }
+    }
+
+    /**
+     * 解析Accept-Language头为Locale对象
+     */
+    private Locale parseLocale(String acceptLanguage) {
+        if (acceptLanguage == null || acceptLanguage.isEmpty()) {
+            return Locale.JAPANESE; // 默认日文 ja_JP
+        }
+        
+        // 解析语言代码：ja-JP 或 zh-CN
+        if (acceptLanguage.startsWith("zh")) {
+            return Locale.SIMPLIFIED_CHINESE; // zh-CN
+        } else if (acceptLanguage.startsWith("ja")) {
+            // 确保返回 ja_JP 而不是 ja
+            return new Locale("ja", "JP"); // ja_JP
+        }
+        
+        return Locale.JAPANESE; // 默认日文 ja_JP
     }
 
     /**

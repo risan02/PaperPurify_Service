@@ -1,6 +1,8 @@
 package com.sunnyday.lychat.service;
 
 import com.sunnyday.lychat.entity.AiDimensionVo;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -12,6 +14,9 @@ import java.util.stream.Collectors;
  */
 @Service
 public class AiTextAnalysisService {
+
+    @Autowired
+    private MessageSource messageSource;
 
     // ====== 日文情绪词库（轻量） ======
     private static final String[] JP_POSITIVE = {
@@ -76,9 +81,10 @@ public class AiTextAnalysisService {
      * 分析文本，返回AI生成痕迹的6个维度
      * 
      * @param rawText 原始文本内容
+     * @param locale 语言环境
      * @return AI痕迹分析维度列表（6个维度）
      */
-    public List<AiDimensionVo> analyzeAiDimensions(String rawText) {
+    public List<AiDimensionVo> analyzeAiDimensions(String rawText, Locale locale) {
         // 一次性计算所有维度值
         DimensionValues values = computeAllDimensions(rawText);
 
@@ -87,44 +93,44 @@ public class AiTextAnalysisService {
         
         // 维度1: 言語的困惑度 (LanguageComplexity)
         AiDimensionVo dim1 = new AiDimensionVo();
-        dim1.setName("言語的困惑度");
+        dim1.setName(messageSource.getMessage("ai.dimension.linguistic_perplexity", null, locale));
         dim1.setLevel(roundTo1Decimal(values.languageComplexity * 10.0)); // 转换为0-10范围，保留1位小数
-        dim1.setEvaluation(explainLanguageComplexity(values.languageComplexity));
+        dim1.setEvaluation(explainLanguageComplexity(values.languageComplexity, locale));
         dimensions.add(dim1);
 
         // 维度2: 句式变化幅度 (Burstiness)
         AiDimensionVo dim2 = new AiDimensionVo();
-        dim2.setName("句式変化幅");
+        dim2.setName(messageSource.getMessage("ai.dimension.sentence_variation", null, locale));
         dim2.setLevel(roundTo1Decimal(values.burstiness * 10.0));
-        dim2.setEvaluation(explainBurstiness(values.burstiness));
+        dim2.setEvaluation(explainBurstiness(values.burstiness, locale));
         dimensions.add(dim2);
 
         // 维度3: 语义分布熵 (TopicEntropy)
         AiDimensionVo dim3 = new AiDimensionVo();
-        dim3.setName("意味分布エントロピー");
+        dim3.setName(messageSource.getMessage("ai.dimension.semantic_entropy", null, locale));
         dim3.setLevel(roundTo1Decimal(values.topicEntropy * 10.0));
-        dim3.setEvaluation(explainTopicEntropy(values.topicEntropy));
+        dim3.setEvaluation(explainTopicEntropy(values.topicEntropy, locale));
         dimensions.add(dim3);
 
         // 维度4: 推理复杂性 (ReasoningComplexity)
         AiDimensionVo dim4 = new AiDimensionVo();
-        dim4.setName("推論複雑性");
+        dim4.setName(messageSource.getMessage("ai.dimension.inference_complexity", null, locale));
         dim4.setLevel(roundTo1Decimal(values.reasoningComplexity * 10.0));
-        dim4.setEvaluation(explainReasoningComplexity(values.reasoningComplexity));
+        dim4.setEvaluation(explainReasoningComplexity(values.reasoningComplexity, locale));
         dimensions.add(dim4);
 
         // 维度5: 情绪起伏度 (EmotionVariance)
         AiDimensionVo dim5 = new AiDimensionVo();
-        dim5.setName("感情起伏度");
+        dim5.setName(messageSource.getMessage("ai.dimension.emotional_fluctuation", null, locale));
         dim5.setLevel(roundTo1Decimal(values.emotionVariance * 10.0));
-        dim5.setEvaluation(explainEmotionVariance(values.emotionVariance));
+        dim5.setEvaluation(explainEmotionVariance(values.emotionVariance, locale));
         dimensions.add(dim5);
 
         // 维度6: 構造とテンプレート使用傾向 (TemplateSimilarity)
         AiDimensionVo dim6 = new AiDimensionVo();
-        dim6.setName("構造とテンプレート使用傾向");
+        dim6.setName(messageSource.getMessage("ai.dimension.template_tendency", null, locale));
         dim6.setLevel(roundTo1Decimal(values.templateHumanScore * 10.0));
-        dim6.setEvaluation(explainTemplateSimilarity(values.templateHumanScore));
+        dim6.setEvaluation(explainTemplateSimilarity(values.templateHumanScore, locale));
         dimensions.add(dim6);
 
         return dimensions;
@@ -160,9 +166,10 @@ public class AiTextAnalysisService {
      * 同时分析6个维度和计算AI率（推荐使用，避免重复计算）
      * 
      * @param rawText 原始文本内容
+     * @param locale 语言环境
      * @return 包含6个维度列表和AI率的分析结果对象
      */
-    public AnalysisResult analyzeWithScore(String rawText) {
+    public AnalysisResult analyzeWithScore(String rawText, Locale locale) {
         // 一次性计算所有维度值
         DimensionValues values = computeAllDimensions(rawText);
 
@@ -171,44 +178,44 @@ public class AiTextAnalysisService {
         
         // 维度1: 言語的困惑度 (LanguageComplexity)
         AiDimensionVo dim1 = new AiDimensionVo();
-        dim1.setName("言語的困惑度");
+        dim1.setName(messageSource.getMessage("ai.dimension.linguistic_perplexity", null, locale));
         dim1.setLevel(roundTo1Decimal(values.languageComplexity * 10.0));
-        dim1.setEvaluation(explainLanguageComplexity(values.languageComplexity));
+        dim1.setEvaluation(explainLanguageComplexity(values.languageComplexity, locale));
         dimensions.add(dim1);
 
         // 维度2: 句式变化幅度 (Burstiness)
         AiDimensionVo dim2 = new AiDimensionVo();
-        dim2.setName("句式変化幅");
+        dim2.setName(messageSource.getMessage("ai.dimension.sentence_variation", null, locale));
         dim2.setLevel(roundTo1Decimal(values.burstiness * 10.0));
-        dim2.setEvaluation(explainBurstiness(values.burstiness));
+        dim2.setEvaluation(explainBurstiness(values.burstiness, locale));
         dimensions.add(dim2);
 
         // 维度3: 语义分布熵 (TopicEntropy)
         AiDimensionVo dim3 = new AiDimensionVo();
-        dim3.setName("意味分布エントロピー");
+        dim3.setName(messageSource.getMessage("ai.dimension.semantic_entropy", null, locale));
         dim3.setLevel(roundTo1Decimal(values.topicEntropy * 10.0));
-        dim3.setEvaluation(explainTopicEntropy(values.topicEntropy));
+        dim3.setEvaluation(explainTopicEntropy(values.topicEntropy, locale));
         dimensions.add(dim3);
 
         // 维度4: 推理复杂性 (ReasoningComplexity)
         AiDimensionVo dim4 = new AiDimensionVo();
-        dim4.setName("推論複雑性");
+        dim4.setName(messageSource.getMessage("ai.dimension.inference_complexity", null, locale));
         dim4.setLevel(roundTo1Decimal(values.reasoningComplexity * 10.0));
-        dim4.setEvaluation(explainReasoningComplexity(values.reasoningComplexity));
+        dim4.setEvaluation(explainReasoningComplexity(values.reasoningComplexity, locale));
         dimensions.add(dim4);
 
         // 维度5: 情绪起伏度 (EmotionVariance)
         AiDimensionVo dim5 = new AiDimensionVo();
-        dim5.setName("感情起伏度");
+        dim5.setName(messageSource.getMessage("ai.dimension.emotional_fluctuation", null, locale));
         dim5.setLevel(roundTo1Decimal(values.emotionVariance * 10.0));
-        dim5.setEvaluation(explainEmotionVariance(values.emotionVariance));
+        dim5.setEvaluation(explainEmotionVariance(values.emotionVariance, locale));
         dimensions.add(dim5);
 
         // 维度6: 構造とテンプレート使用傾向 (TemplateSimilarity)
         AiDimensionVo dim6 = new AiDimensionVo();
-        dim6.setName("構造とテンプレート使用傾向");
+        dim6.setName(messageSource.getMessage("ai.dimension.template_tendency", null, locale));
         dim6.setLevel(roundTo1Decimal(values.templateHumanScore * 10.0));
-        dim6.setEvaluation(explainTemplateSimilarity(values.templateHumanScore));
+        dim6.setEvaluation(explainTemplateSimilarity(values.templateHumanScore, locale));
         dimensions.add(dim6);
 
         // 计算AI率
@@ -305,14 +312,16 @@ public class AiTextAnalysisService {
         return clamp(logistic(entropy, 2.8, 1.0));
     }
 
-    private String explainLanguageComplexity(double s) {
+    private String explainLanguageComplexity(double s, Locale locale) {
+        String key;
         if (s < 0.3) {
-            return "言語パターンが比較的単一で、テンプレート化の傾向があります。";
+            key = "ai.dimension.linguistic_perplexity.evaluation.low";
+        } else if (s < 0.7) {
+            key = "ai.dimension.linguistic_perplexity.evaluation.medium";
+        } else {
+            key = "ai.dimension.linguistic_perplexity.evaluation.high";
         }
-        if (s < 0.7) {
-            return "言語の複雑さは適度で、自然な表現です。";
-        }
-        return "言語の多様性が強く、人間の執筆により近い特徴を示しています。";
+        return messageSource.getMessage(key, null, locale);
     }
 
     // ====================== ② 句式波动 ======================
@@ -331,14 +340,16 @@ public class AiTextAnalysisService {
         return clamp(smoothRatio(ratio, 0.5));
     }
 
-    private String explainBurstiness(double s) {
+    private String explainBurstiness(double s, Locale locale) {
+        String key;
         if (s < 0.3) {
-            return "文の構造が比較的均一で、AIスタイルにやや偏っています。";
+            key = "ai.dimension.sentence_variation.evaluation.low";
+        } else if (s < 0.7) {
+            key = "ai.dimension.sentence_variation.evaluation.medium";
+        } else {
+            key = "ai.dimension.sentence_variation.evaluation.high";
         }
-        if (s < 0.7) {
-            return "文の変化は適度で、自然な表現です。";
-        }
-        return "文の変動が大きく、より自由な人間の執筆スタイルに近い特徴があります。";
+        return messageSource.getMessage(key, null, locale);
     }
 
     // ====================== ③ 主题熵 ======================
@@ -364,14 +375,16 @@ public class AiTextAnalysisService {
         return clamp(logistic(entropy, 1.8, 1.2));
     }
 
-    private String explainTopicEntropy(double s) {
+    private String explainTopicEntropy(double s, Locale locale) {
+        String key;
         if (s < 0.3) {
-            return "主題が集中しており、繰り返し度が高いです。";
+            key = "ai.dimension.semantic_entropy.evaluation.low";
+        } else if (s < 0.7) {
+            key = "ai.dimension.semantic_entropy.evaluation.medium";
+        } else {
+            key = "ai.dimension.semantic_entropy.evaluation.high";
         }
-        if (s < 0.7) {
-            return "主題情報の分布は自然です。";
-        }
-        return "表現が豊かで多様、内容の情報量が大きいです。";
+        return messageSource.getMessage(key, null, locale);
     }
 
     // ====================== ④ 推理复杂度 ======================
@@ -402,14 +415,16 @@ public class AiTextAnalysisService {
         return clamp(score);
     }
 
-    private String explainReasoningComplexity(double s) {
+    private String explainReasoningComplexity(double s, Locale locale) {
+        String key;
         if (s < 0.45) {
-            return "論理的な接続が弱く、因果・転換の接続を適切に増やすことができます。";
+            key = "ai.dimension.inference_complexity.evaluation.low";
+        } else if (s < 0.75) {
+            key = "ai.dimension.inference_complexity.evaluation.medium";
+        } else {
+            key = "ai.dimension.inference_complexity.evaluation.high";
         }
-        if (s < 0.75) {
-            return "論理構造は自然で、一定の推理性があります。";
-        }
-        return "論理的な接続が豊富で、構造が複雑です。";
+        return messageSource.getMessage(key, null, locale);
     }
 
     // ====================== ⑤ 情绪起伏 ======================
@@ -434,14 +449,16 @@ public class AiTextAnalysisService {
         return clamp(score);
     }
 
-    private String explainEmotionVariance(double s) {
+    private String explainEmotionVariance(double s, Locale locale) {
+        String key;
         if (s < 0.45) {
-            return "感情表現が平穏で、中立的な表現が主です。";
+            key = "ai.dimension.emotional_fluctuation.evaluation.low";
+        } else if (s < 0.75) {
+            key = "ai.dimension.emotional_fluctuation.evaluation.medium";
+        } else {
+            key = "ai.dimension.emotional_fluctuation.evaluation.high";
         }
-        if (s < 0.75) {
-            return "感情表現は自然で、一定の起伏があります。";
-        }
-        return "感情が豊かで、主観的な色彩が明らかです。";
+        return messageSource.getMessage(key, null, locale);
     }
 
     // ====================== ⑥ 模板相似度（AI-like） ======================
@@ -488,14 +505,16 @@ public class AiTextAnalysisService {
         return dot / (Math.sqrt(n1) * Math.sqrt(n2));
     }
 
-    private String explainTemplateSimilarity(double humanScore) {
+    private String explainTemplateSimilarity(double humanScore, Locale locale) {
+        String key;
         if (humanScore < 0.4) {
-            return "一定のテンプレート化の特徴があります。";
+            key = "ai.dimension.template_tendency.evaluation.low";
+        } else if (humanScore < 0.8) {
+            key = "ai.dimension.template_tendency.evaluation.medium";
+        } else {
+            key = "ai.dimension.template_tendency.evaluation.high";
         }
-        if (humanScore < 0.8) {
-            return "表現が部分的にテンプレートに近いものの、個性を保っています。";
-        }
-        return "テンプレートとの類似度が低く、執筆スタイルが個性的です。";
+        return messageSource.getMessage(key, null, locale);
     }
 }
 

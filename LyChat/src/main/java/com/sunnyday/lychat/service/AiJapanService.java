@@ -14,8 +14,13 @@ import reactor.core.publisher.Flux;
         chatMemoryProvider = "chatMemoryProvider"//配置会话记忆提供者对象
 )
 public interface AiJapanService {
+    // 注意：此方法使用固定的系统消息，主要用于向后兼容
     @SystemMessage(fromResource = "aiSystemPrompt.txt")
     String chat(@MemoryId String memoryId, @UserMessage String message);
+
+    // 新增方法：不使用@SystemMessage，允许动态传递完整的提示词
+    // 这样可以在用户消息中包含系统提示词和语言要求
+    String chatWithoutSystemMessage(@MemoryId String memoryId, @UserMessage String fullPrompt);
 
     @SystemMessage(fromResource = "aiSystemPrompt.txt")
     Flux<String> chat(@MemoryId String memoryId, @UserMessage String message, String fileContent);
