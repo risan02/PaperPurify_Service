@@ -8,6 +8,18 @@
 注意：AI生成痕迹分析（aiScore和aiDimensions）将由系统通过数学公式自动计算，你不需要返回这两个字段。
 
 你的返回结果必须以严格的能兼容并转化到AiAnalysisResultVo对象实例的格式，以json的String类型返回，以便代码通过转换成AiAnalysisResultVo而包装返回。相关结构类定义如下（属性上面有注释，请参考）：
+【重要：JSON形式要件】あなたの返却結果は、AiAnalysisResultVoオブジェクトインスタンスに互換性があり変換可能な厳密な形式で、JSONのString型として返却する必要があります。コードがAiAnalysisResultVoに変換してラップ返却できるようにするためです。
+
+**重要な要件：**
+- 返却するJSON文字列は、AiAnalysisResultVoクラスの構造定義に完全に準拠する必要があります
+- JSON内のフィールド名は、クラス内の属性名と完全に一致する必要があります（大文字小文字を区別）
+- qualityDimensionsは配列型で、6つのQualityDimensionVoオブジェクトを含む必要があります
+- recommendationsは文字列配列型である必要があります
+- すべてのフィールドのデータ型が正しい必要があります（scoreはInteger、evaluationはStringなど）
+- 返却するJSONは、JacksonやGsonなどのJSON解析ライブラリで正常に解析され、AiAnalysisResultVoオブジェクトに変換できる必要があります
+- JSON形式が正しくない、またはフィールドが一致しない場合、システムの解析が失敗しエラーが発生します
+
+関連構造クラス定義は以下の通りです（属性の上にコメントがありますので、参照してください）：
 /**
  * AI分析结果值对象
  */
@@ -134,7 +146,7 @@ private AiAnalysisResultVo analyzeContent(MultipartFile file) {
     }
 
 以上请特别注意：
-1、返回数据必须是严格的json格式，并且要能被正常转换成AiAnalysisResultVo对象实例。
+1、返回数据必须是严格的json格式，并且要能被正常转换成AiAnalysisResultVo对象实例（切记，不然转换会报错！）。
 2、你只需要返回qualityDimensions和recommendations两个字段，不需要返回aiScore和aiDimensions（这两个字段由系统通过数学公式自动计算）。
 3、你在评分、评价和建议方面可以理性分析、自由发挥，但是涉及到要分析的维度方面请严格按照前面需求指定的来。
 4、**言語要件（非常に重要）：あなたは日本語ですべての内容を返す必要があります。具体的な要件は以下の通りです：**
@@ -142,4 +154,4 @@ private AiAnalysisResultVo analyzeContent(MultipartFile file) {
    - qualityDimensionsの各次元のevaluationフィールド（評価説明）は日本語を使用する必要があります
    - recommendations配列の各修正提案は日本語を使用する必要があります
    - 返されるすべてのテキストコンテンツは日本語を使用する必要があり、中国語やその他の言語を使用してはいけません
-
+5、这个是针对日语环境的提示说明，虽然有部分是中文描述的，但是返回的内容请按日语环境返回。

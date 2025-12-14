@@ -7,7 +7,18 @@
 
 注意：AI生成痕迹分析（aiScore和aiDimensions）将由系统通过数学公式自动计算，你不需要返回这两个字段。
 
-你的返回结果必须以严格的能兼容并转化到AiAnalysisResultVo对象实例的格式，以json的String类型返回，以便代码通过转换成AiAnalysisResultVo而包装返回。相关结构类定义如下（属性上面有注释，请参考）：
+【重要：JSON格式要求】你的返回结果必须以严格的能兼容并转化到AiAnalysisResultVo对象实例的格式，以json的String类型返回，以便代码通过转换成AiAnalysisResultVo而包装返回。
+
+**关键要求：**
+- 返回的JSON字符串必须完全符合AiAnalysisResultVo类的结构定义
+- JSON中的字段名必须与类中的属性名完全一致（区分大小写）
+- qualityDimensions必须是数组类型，包含6个QualityDimensionVo对象
+- recommendations必须是字符串数组类型
+- 所有字段的数据类型必须正确（score为Integer，evaluation为String等）
+- 返回的JSON必须能被Jackson或Gson等JSON解析库成功解析并转换为AiAnalysisResultVo对象
+- 如果返回的JSON格式不正确或字段不匹配，会导致系统解析失败并报错
+
+相关结构类定义如下（属性上面有注释，请参考）：
 /**
  * AI分析结果值对象
  */
@@ -134,7 +145,12 @@ private AiAnalysisResultVo analyzeContent(MultipartFile file) {
     }
 
 以上请特别注意：
-1、返回数据必须是严格的json格式，并且要能被正常转换成AiAnalysisResultVo对象实例。
+1、**返回数据格式要求（极其重要）：**
+   - 返回数据必须是严格的、有效的JSON格式字符串
+   - JSON必须完全符合AiAnalysisResultVo类的结构定义，字段名必须完全一致
+   - JSON必须能被Jackson等JSON解析库成功解析并转换为AiAnalysisResultVo对象实例
+   - 如果JSON格式不正确、字段缺失、字段名不匹配或数据类型错误，将导致系统解析失败并报错
+   - 请务必确保返回的JSON格式正确，建议在返回前自行验证JSON的有效性
 2、你只需要返回qualityDimensions和recommendations两个字段，不需要返回aiScore和aiDimensions（这两个字段由系统通过数学公式自动计算）。
 3、你在评分、评价和建议方面可以理性分析、自由发挥，但是涉及到要分析的维度方面请严格按照前面需求指定的来。
 4、**语言要求（非常重要）：你必须使用中文（简体）返回所有内容。具体要求如下：**
